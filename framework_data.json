@@ -1,0 +1,18 @@
+{
+  "main_info": {
+    "device_name": "raspberry1",
+    "local_adress": "http://localhost:8086/write?db=framework_measurements",
+    "global_adress": "http://192.52.36.121:8086/write?db=framework_measurements"
+  },
+  "sensors": {
+    "sensor_1": {
+      "sensor_type": "m5Stack",
+      "sensor_name": "m5stack1",
+      "sensor_bluetooth_adress": "A4:CF:12:6E:12:96",
+      "helpCharacteristic_UUID": "8eabbd4a-7220-4c74-af1d-b45e97317595",
+      "dataCharacteristic_UUID": "beb5483e-36e1-4688-b7f5-ea07361b26a8",
+      "sync_interval": "60",
+      "status": "on"
+    }
+  }
+}
