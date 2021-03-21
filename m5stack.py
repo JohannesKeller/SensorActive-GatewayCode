@@ -6,6 +6,7 @@ import _thread
 import pexpect
 import re
 import sys
+import json
 
 from post_and_sync import postandsync
 
@@ -65,6 +66,16 @@ class m5Stack:
                 return True
             if line == "":
                 print("Gerät nicht verfügbar")
+                
+                with open("framework_data.json", "r") as jsonFile:
+                    data = json.load(jsonFile)
+                    
+                    if data["sensors"][self.Name]["status"] == "on":
+                        data["sensors"][self.Name]["status"] = "off"
+
+                        with open("framework_data.json", "w") as jsonFile:
+                            json.dump(data, jsonFile)
+                    
                 return False
                 x=1
 
