@@ -1,4 +1,4 @@
-import http.server
+import http.server, ssl
 import cgi
 import base64
 import json
@@ -176,5 +176,10 @@ class CustomHTTPServer(http.server.HTTPServer):
 def start_server():
     server = CustomHTTPServer(('192.168.0.133', 8888))
     server.set_auth('demo', 'demo')
+    server.socket = ssl.wrap_socket(server.socket,
+                                    server_side=True,
+                                    certfile='cert.pem',
+                                    keyfile='key.pem',
+                                    ssl_version=ssl.PROTOCOL_TLS)
     server.serve_forever()
     print("server läuft")
