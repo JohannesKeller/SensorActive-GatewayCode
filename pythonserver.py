@@ -4,6 +4,8 @@ import base64
 import json
 from urllib.parse import urlparse, parse_qs
 import json
+from colorama import init, Fore, Style
+import os
 
 
 class CustomServerHandler(http.server.BaseHTTPRequestHandler):
@@ -174,12 +176,17 @@ class CustomHTTPServer(http.server.HTTPServer):
 
 
 def start_server():
-    server = CustomHTTPServer(('192.168.0.133', 8888))
+    IPAdresse = (("".join(os.popen('hostname -I').readlines())).split(" ", 1))[0]
+    Port = 8888
+    
+    server = CustomHTTPServer((IPAdresse, Port))
     server.set_auth('demo', 'demo')
     server.socket = ssl.wrap_socket(server.socket,
                                     server_side=True,
-                                    certfile='cert.pem',
-                                    keyfile='key.pem',
+                                    certfile='SSL/cert.pem',
+                                    keyfile='SSL/key.pem',
                                     ssl_version=ssl.PROTOCOL_TLS)
+    print("")
+    print(Fore.MAGENTA + "Webserver: Server läuft und ist über folgende Adresse erreichbar: "+IPAdresse+":"+str(Port))
     server.serve_forever()
-    print("server läuft")
+    

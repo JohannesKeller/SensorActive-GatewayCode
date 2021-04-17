@@ -1,7 +1,4 @@
 import requests
-from datetime import datetime
-from influxdb_client import InfluxDBClient, Point, WritePrecision
-from influxdb_client.client.write_api import SYNCHRONOUS
 
 class postandsync:
         
@@ -9,22 +6,12 @@ class postandsync:
         global beacon_addr
         global timestamp_lost_connection
         
-        headers = {'Authorization': 'Token C3_mDVcsHuJjCqz7PZDy9OBc6N0HvjGTBJWbWOtgAiQREOVa71twQ77gR4z3p_aUT76ekULt50e7U4PiBEmeuA=='}
-        
         data_string=m5stack.Device_name + ",beacon_name="+m5stack.Name+",measurement=" + measurement + " value=" + str(value) + " " + nano_gekuerzt
-        print("Lokal gepostet: "+data_string)
+        #print("Lokal gepostet: "+data_string)
         requests.post(m5stack.Local_addr, data=data_string)
         
         try:
-            
-            token = "biT7eNSPtoDh3uNlx_sFqPDAPcDDhjeYWpHJPprUF3CsQiYPQW0T-pzeSd0bX9IS8DxmtYsU067Ypr6dLcp7VA=="
-            org = "SensorActive"
-            bucket = "Bucket1"
-            client = InfluxDBClient(url="http://192.52.37.249:8086", token=token)
-            write_api = client.write_api(write_options=SYNCHRONOUS)
-            data = m5stack.Device_name + ",beacon_name="+m5stack.Name+" measurement=" + measurement + " value=" + str(value) + " " + nano_gekuerzt
-            print(data)
-            write_api.write(bucket, org, data_string)
+            requests.post(m5stack.Global_addr, data=data_string)
             
             if m5stack.connected_to_server == False:
                 secs = m5stack.timestamp_lost_connection / 1e9
@@ -48,7 +35,7 @@ class postandsync:
                     
                 m5stack.connected_to_server = True
         except:
-            print("Keine Verbindung")
+            #print("Keine Verbindung")
             if m5stack.connected_to_server == True:
                 m5stack.timestamp_lost_connection = nano_gekuerzt
             m5stack.connected_to_server = False

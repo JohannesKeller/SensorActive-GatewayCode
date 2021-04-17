@@ -9,6 +9,9 @@ import sys
 import json
 
 from post_and_sync import postandsync
+from colorama import init, Fore, Style
+
+import globalvars
 
 class m5Stack:
     
@@ -54,7 +57,7 @@ class m5Stack:
                         number = number + line[starter]
                         starter=starter+1
                 except:
-                    print(number)
+                    print(Fore.BLUE + "BLE: " + self.Name + " - konnte gefunden werden - RSSI: "+number)
                 
                 time_nanosec = int(time.time_ns())
                 nano_gekuerzt2 = str(time_nanosec)[:-8]
@@ -65,7 +68,7 @@ class m5Stack:
                     print("nicht geklappt")
                 return True
             if line == "":
-                print("Gerät nicht verfügbar")
+                print(Fore.BLUE + "BLE: " + self.Name + " - konnte nicht gefunden werden")
                 
                 with open("framework_data.json", "r") as jsonFile:
                     data = json.load(jsonFile)
@@ -106,18 +109,20 @@ class m5Stack:
                 
                 if anzahlvongets+1 == self.getcounter:
                     self.alles_da = True
-                    print(self.werte_array)                    
-                    for i in self.werte_array: 
-                        #print(i)
+                    print(Fore.BLUE + "BLE: " + self.Name + " - "+str(len(self.werte_array))+" Messwerte wurden übertragen")
+                    #print(self.werte_array)
+                    try:
+                        for i in self.werte_array: 
+                            #print(i)
+                            try:
+                                _thread.start_new_thread( postandsync.post_data_to_database, (self, i[0], i[1], i[2]) )
+                            except:
+                                print("nicht geklappt")
+                    finally:
                         try:
-                            _thread.start_new_thread( postandsync.post_data_to_database, (self, i[0], i[1], i[2]) )
+                            _thread.start_new_thread( self.thread_2, ("Thread-1", 2, ) )
                         except:
                             print("nicht geklappt")
-                    self.getcounter=-1
-        try:
-            _thread.start_new_thread( self.thread_2, ("Thread-1", 2, ) )
-        except:
-            print("nicht geklappt")
         
     def thread_1(self, threadName, delay):
         self.device.subscribe("beb5483e-36e1-4688-b7f5-ea07361b26a8", callback=self.handle_data)
@@ -128,15 +133,23 @@ class m5Stack:
         value = self.device.char_read("8eabbd4a-7220-4c74-af1d-b45e97317595")
         value = str(value, 'utf-8')
         if value == "s" and self.alles_da == True:
-            print("Übertragung abgeschlossen")
-            self.device.char_write("8eabbd4a-7220-4c74-af1d-b45e97317595", bytearray([0x67])) #g
-            self.getcounter=-1        
+            #if self.getcounter != -1:
+                print(Fore.BLUE + "BLE: " + self.Name + " - Übertragung abgeschlossen")
+                self.device.char_write("8eabbd4a-7220-4c74-af1d-b45e97317595", bytearray([0x67])) #g
+                self.getcounter=-1        
         elif value == "s" and self.alles_da == False:
-            print("werte fehlen")
+            print(Fore.BLUE + "BLE: " + self.Name + " - Übertragung fehlgeschlagen")
             self.getcounter=-1
+        
+        self.device.unsubscribe("beb5483e-36e1-4688-b7f5-ea07361b26a8",)
+        self.adapter.stop()
+        globalvars.bluetooth_free = True;
+        time.sleep(self.Sync_interval)
+        self.startup()
             
     def startup(self):
-        while True:
+        if(globalvars.bluetooth_free):
+            globalvars.bluetooth_free = False;
             poster1 = postandsync()
             if self.get_rssi_and_check_erreichbarkeit():
                 try:
@@ -144,10 +157,15 @@ class m5Stack:
                     self.adapter.start()
                     self.device = self.adapter.connect(self.Blu_addr)
                 finally:
-                    print("Mit Gerät verbunden")
-                try:
-                    _thread.start_new_thread( self.thread_1, ("Thread-1", 2, ) )
-                except:
-                    print("nicht geklappt")
-                    
-            time.sleep(self.Sync_interval)
+                    print(Fore.BLUE + "BLE: " + self.Name + " - erfolgreicher Verbindungsaufbau")
+                    try:
+                        _thread.start_new_thread( self.thread_1, ("Thread-1", 2, ) )
+                    except:
+                        print("nicht geklappt")
+            else:
+                globalvars.bluetooth_free = True;
+                time.sleep(self.Sync_interval)
+                self.startup()
+        else:
+            time.sleep(5)
+            self.startup()
