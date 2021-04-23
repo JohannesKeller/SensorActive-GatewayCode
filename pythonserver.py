@@ -7,6 +7,8 @@ import json
 from colorama import init, Fore, Style
 import os
 
+import globalvars
+
 
 class CustomServerHandler(http.server.BaseHTTPRequestHandler):
 
@@ -50,7 +52,7 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
 
             base_path = urlparse(self.path).path
             if base_path == '/status':
-                with open('framework_data.json', 'r') as f:
+                with open(globalvars.path_to_framework_data_json, 'r') as f:
                     json_data = json.load(f)
                 self.wfile.write(bytes(json.dumps(json_data), 'utf-8'))
                 # Do some work
@@ -85,41 +87,89 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(bytes(json.dumps(response), 'utf-8'))
 
         elif self.headers.get('Authorization') == 'Basic ' + str(key):
+            """
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-
-            #postvars = self._parse_POST()
-            getvars = self._parse_GET()
-
+            
+            content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
+            post_data = self.rfile.read(content_length) # <--- Gets the data itself
+            print(post_data.decode('utf-8'))
+            """
+            
+            content_len = int(self.headers.get('content-length', 0))
+            post_body = self.rfile.read(content_len)
+            print(post_body)
+            print(post_body.decode("utf-8"))
+            
+            postvars = self._parse_POST()
+            print(postvars)
+            
+            """
             response = {
                 'path': self.path,
                 'get_vars': str(getvars)
                 #'get_vars': str(postvars)
             }
-
+            """
             base_path = urlparse(self.path).path
             if base_path == '/changeintervall':
-                sensor = getvars["sensor"][0]
-                intervall = getvars["intervall"][0]
+                print(postvars)
+                
+                """
+                sensor = postvars["sensor"][0]
+                intervall = postvars["intervall"][0]
             
                 print(sensor)
                 print(intervall)
                 
-                with open("framework_data.json", "r") as jsonFile:
+                with open(globalvars.path_to_framework_data_json, "r") as jsonFile:
                     data = json.load(jsonFile)
                     
                 data["sensors"][sensor]["sync_interval"] = intervall
 
-                with open("framework_data.json", "w") as jsonFile:
+                with open(globalvars.path_to_framework_data_json, "w") as jsonFile:
                     json.dump(data, jsonFile)
+                """
                 # Do some work
                 pass
-            elif base_path == '/path2':
-                # Do some work
-                pass
+            elif base_path == '/changeusername':
+                old = postvars["old"][0]
+                new = postvars["new"][0]
+            
+                print(old)
+                print(new)
+                
+                with open(globalvars.path_to_password_json, "r") as jsonFile:
+                    data = json.load(jsonFile)
+                    
+                if data["username"] == old:
+                    data["username"] = new
 
+                    with open(globalvars.path_to_password_json, "w") as jsonFile:
+                        json.dump(data, jsonFile)
+                        response = {
+                            'success': True,
+                            'error': 'Invalid credentials'
+                        }
+                        #self.wfile.write(bytes(json.dumps(response), 'utf-8'))
+                        
+                        with open(globalvars.path_to_password_json, "r") as jsonFile:
+                            data = json.load(jsonFile)
+                        #server.shutdown()
+                        #server.set_auth(data["username"], data["password"])
+                        #server.serve_forever()
+                else:
+                    response = {
+                            'success': False,
+                            'error': 'Invalid credentials'
+                        }
+                    
+                # Do some work
+                pass
+            
             self.wfile.write(bytes(json.dumps(response), 'utf-8'))
+            
         else:
             self.do_AUTHHEAD()
 
@@ -132,23 +182,21 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
 
         response = {
             'path': self.path,
-            'get_vars': str(getvars)
+            'get_vars': str(postvars)
             #'get_vars': str(postvars)
         }
 
-        self.wfile.write(bytes(json.dumps(response), 'utf-8'))
-
+        #self.wfile.write(bytes(json.dumps(response), 'utf-8'))
+        
     def _parse_POST(self):
         ctype, pdict = cgi.parse_header(self.headers.get('content-type'))
         if ctype == 'multipart/form-data':
             postvars = cgi.parse_multipart(self.rfile, pdict)
         elif ctype == 'application/x-www-form-urlencoded':
-            length = int(self.headers.getheader('content-length'))
-            postvars = cgi.parse_qs(
-                self.rfile.read(length), keep_blank_values=1)
+            length = int(self.headers['content-length'])
+            postvars = parse_qs(self.rfile.read(length),keep_blank_values=1)
         else:
             postvars = {}
-
         return postvars
 
     def _parse_GET(self):
@@ -170,9 +218,11 @@ class CustomHTTPServer(http.server.HTTPServer):
     def set_auth(self, username, password):
         self.key = base64.b64encode(
             bytes('%s:%s' % (username, password), 'utf-8')).decode('ascii')
+    
 
     def get_auth_key(self):
         return self.key
+    
 
 
 def start_server():
@@ -180,7 +230,12 @@ def start_server():
     Port = 8888
     
     server = CustomHTTPServer((IPAdresse, Port))
-    server.set_auth('demo', 'demo')
+    
+    with open(globalvars.path_to_password_json, "r") as jsonFile:
+        data = json.load(jsonFile)
+        
+    server.set_auth(data["username"], data["password"])
+    
     server.socket = ssl.wrap_socket(server.socket,
                                     server_side=True,
                                     certfile='SSL/cert.pem',

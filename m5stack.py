@@ -70,13 +70,13 @@ class m5Stack:
             if line == "":
                 print(Fore.BLUE + "BLE: " + self.Name + " - konnte nicht gefunden werden")
                 
-                with open("framework_data.json", "r") as jsonFile:
+                with open(globalvars.path_to_framework_data_json, "r") as jsonFile:
                     data = json.load(jsonFile)
                     
                     if data["sensors"][self.Name]["status"] == "on":
                         data["sensors"][self.Name]["status"] = "off"
 
-                        with open("framework_data.json", "w") as jsonFile:
+                        with open(globalvars.path_to_framework_data_json, "w") as jsonFile:
                             json.dump(data, jsonFile)
                     
                 return False
@@ -149,6 +149,7 @@ class m5Stack:
             
     def startup(self):
         if(globalvars.bluetooth_free):
+            self.werte_array = []
             globalvars.bluetooth_free = False;
             poster1 = postandsync()
             if self.get_rssi_and_check_erreichbarkeit():
