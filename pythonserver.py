@@ -78,7 +78,7 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
         ''' Present frontpage with user authentication. '''
         if self.headers.get('Authorization') == None:
             self.do_AUTHHEAD()
-
+                
             response = {
                 'success': False,
                 'error': 'No auth header received'
@@ -87,34 +87,38 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(bytes(json.dumps(response), 'utf-8'))
 
         elif self.headers.get('Authorization') == 'Basic ' + str(key):
-            """
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            
-            content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
-            post_data = self.rfile.read(content_length) # <--- Gets the data itself
-            print(post_data.decode('utf-8'))
-            """
             
             content_len = int(self.headers.get('content-length', 0))
-            post_body = self.rfile.read(content_len)
-            print(post_body)
-            print(post_body.decode("utf-8"))
+            post_body = self.rfile.read(content_len).decode("utf-8").split("&")
             
-            postvars = self._parse_POST()
-            print(postvars)
+            p = []
             
-            """
+            
+            for x in post_body:
+                x=x.split("=")
+                p.append(x)
+                print(x)
+            
+            print(p)          
+            
+            
+            
+            
             response = {
                 'path': self.path,
-                'get_vars': str(getvars)
+                #'get_vars': str(getvars)
                 #'get_vars': str(postvars)
             }
-            """
-            base_path = urlparse(self.path).path
+            
+            switch (urlparse(self.path).path) {
+            case '/changeintervall':
+                monthString = "January";
+                break;
+            default: monthString = "Invalid month";
+                     break;
+        }
             if base_path == '/changeintervall':
-                print(postvars)
+                
                 
                 """
                 sensor = postvars["sensor"][0]
