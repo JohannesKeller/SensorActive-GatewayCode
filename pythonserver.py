@@ -7,6 +7,10 @@ import json
 from colorama import init, Fore, Style
 import os
 from io import BytesIO
+import time
+import sys
+import _thread
+
 
 import globalvars
 
@@ -30,12 +34,13 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
             if y[0] == befehl:
                 return y[1]
         
-        return "nix"
+        
 
     def do_POST(self):
         key = self.server.get_auth_key()
         base_path = urlparse(self.path).path        
         self.do_AUTHHEAD()
+        response =""
         
         if self.headers.get('Authorization') == None:  
             
@@ -45,6 +50,7 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
                     'success': True,
                 }
                 
+                
             else:
             
                 response = {
@@ -52,7 +58,6 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
                     'error': 'no auth'
                 }
             
-
             self.wfile.write(bytes(json.dumps(response), 'utf-8'))
 
         elif self.headers.get('Authorization') == 'Basic ' + str(key):
@@ -66,21 +71,27 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
             for x in post_body:
                 x=x.split("=")
                 p.append(x)
-                print(x)
+                #print(x)
             
-            print(p)          
+            #print(p)          
             
             
-            if base_path == '/status':
+            if base_path == '/sensoractive_gateway':
+                
+                response = {
+                    'success': True,
+                }
+                
+            
+            elif base_path == '/status':
                 
                 with open(globalvars.path_to_framework_data_json, 'r') as f:
                     json_data = json.load(f)
                 
                 response = {
                             'success': True,
-                            'error': json_data
+                            'data': json_data
                         }
-                self.wfile.write(bytes(json.dumps(response), 'utf-8'))
                 
                 pass
             
@@ -100,11 +111,14 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
                 with open(globalvars.path_to_framework_data_json, "w") as jsonFile:
                     json.dump(data, jsonFile)
                 
-                # Do some work
+                response = {
+                    'success': True,
+                }
+                #self.wfile.write(bytes(json.dumps(response), 'utf-8'))
                 pass
             elif base_path == '/changeusername':
-                old = postvars["old"][0]
-                new = postvars["new"][0]
+                old = self.get_Postvar(p, "old")
+                new = self.get_Postvar(p, "new")
             
                 print(old)
                 print(new)
@@ -117,27 +131,29 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
 
                     with open(globalvars.path_to_password_json, "w") as jsonFile:
                         json.dump(data, jsonFile)
-                        response = {
-                            'success': True,
-                            'error': 'Invalid credentials'
-                        }
-                        #self.wfile.write(bytes(json.dumps(response), 'utf-8'))
-                        
-                        with open(globalvars.path_to_password_json, "r") as jsonFile:
-                            data = json.load(jsonFile)
-                        #server.shutdown()
-                        #server.set_auth(data["username"], data["password"])
-                        #server.serve_forever()
+                    response = {
+                        'success': True
+                    }
+                    self.wfile.write(bytes(json.dumps(response), 'utf-8'))
+                    #time.sleep(5)
+                    #super().shutdown()
+                    #self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    #time.sleep(2)
+                    _thread.start_new_thread(start_server, ())
+                    
+                    sys.exit()
+                    #self.server.shutdown()
+                    
+                    #
+                    #self.server.set_auth(data["username"], data["password"])
+                    #self.server.serve_forever()
                 else:
                     response = {
-                            'success': False,
-                            'error': 'Invalid credentials'
+                            'success': False
                         }
-                    
-                # Do some work
                 pass
             
-            #self.wfile.write(bytes(json.dumps(response), 'utf-8'))
+            self.wfile.write(bytes(json.dumps(response), 'utf-8'))
             
         else:
             self.do_AUTHHEAD()
@@ -149,13 +165,6 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
 
             self.wfile.write(bytes(json.dumps(response), 'utf-8'))
 
-        response = {
-            'path': self.path,
-            #'get_vars': str(postvars)
-            #'get_vars': str(postvars)
-        }
-
-        #self.wfile.write(bytes(json.dumps(response), 'utf-8'))
 
 
 class CustomHTTPServer(http.server.HTTPServer):
@@ -163,16 +172,13 @@ class CustomHTTPServer(http.server.HTTPServer):
 
     def __init__(self, address, handlerClass=CustomServerHandler):
         super().__init__(address, handlerClass)
-
     def set_auth(self, username, password):
         self.key = base64.b64encode(
             bytes('%s:%s' % (username, password), 'utf-8')).decode('ascii')
     
-
     def get_auth_key(self):
         return self.key
     
-
 
 def start_server():
     IPAdresse = (("".join(os.popen('hostname -I').readlines())).split(" ", 1))[0]
@@ -190,7 +196,7 @@ def start_server():
                                     certfile='SSL/cert.pem',
                                     keyfile='SSL/key.pem',
                                     ssl_version=ssl.PROTOCOL_TLS)
-    print("")
+    
     print(Fore.MAGENTA + "Webserver: Server läuft und ist über folgende Adresse erreichbar: "+IPAdresse+":"+str(Port))
     server.serve_forever()
     

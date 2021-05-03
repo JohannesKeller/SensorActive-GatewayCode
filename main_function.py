@@ -9,6 +9,11 @@ import globalvars
 
 
 _thread.start_new_thread(pythonserver.start_server, ())
+#_thread._Thread_stop()
+#time.sleep(6)
+#_thread.start_new_thread(pythonserver.start_server, ())
+
+
 
 with open(globalvars.path_to_framework_data_json, 'r') as f:
     json_data = json.load(f)
@@ -32,5 +37,5 @@ for sensor in json_data["sensors"]:
     
 
 #_thread.start_new_thread( M51.startup,() )
-#  time.sleep(6)
+#time.sleep(6)
 #_thread.start_new_thread( M52.startup,() )
