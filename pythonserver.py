@@ -95,63 +95,77 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
                 
                 pass
             
-            elif base_path == '/changeintervall':
-                
-                sensor = self.get_Postvar(p, "sensor")
-                intervall = self.get_Postvar(p, "intervall")
-            
-                print(sensor)
-                print(intervall)
-                
-                with open(globalvars.path_to_framework_data_json, "r") as jsonFile:
-                    data = json.load(jsonFile)
+            elif base_path == '/change_sensor':
                     
-                data["sensors"][sensor]["sync_interval"] = intervall
-
-                with open(globalvars.path_to_framework_data_json, "w") as jsonFile:
-                    json.dump(data, jsonFile)
+                sensor_id = self.get_Postvar(p, "sensor_id")
+                sync_interval = self.get_Postvar(p, "sync_interval")
+                sensor_new_name = self.get_Postvar(p, "sensor_new_name")
                 
-                response = {
-                    'success': True,
-                }
+                if sensor_id == None:
+                    response = {
+                    'success': False,
+                    'Ursache': "Kein Sensor angegeben"
+                    }
+                    
+                else:
+                    print("sensor_id: " + sensor_id)
+                    with open(globalvars.path_to_framework_data_json, "r") as jsonFile:
+                        data = json.load(jsonFile)
+                        
+                    if sync_interval != None:
+                        data["sensors"][sensor_id]["sync_interval"] = sync_interval
+                        print("new sync_interval: " + sync_interval)
+                        
+                    if sensor_new_name != None:
+                        data["sensors"][sensor_id]["sensor_name"] = sensor_new_name
+                        print("new sensor_name: " + sensor_new_name) 
+                    
+                
+
+                    with open(globalvars.path_to_framework_data_json, "w") as jsonFile:
+                        json.dump(data, jsonFile)
+                
+                
                 #self.wfile.write(bytes(json.dumps(response), 'utf-8'))
                 pass
-            elif base_path == '/changeusername':
-                old = self.get_Postvar(p, "old")
-                new = self.get_Postvar(p, "new")
-            
-                print(old)
-                print(new)
+            elif base_path == '/change_ud':
+                
+                
+                old_un = self.get_Postvar(p, "old_un")
+                new_un = self.get_Postvar(p, "new_un")
+                old_pw = self.get_Postvar(p, "old_pw")
+                new_pw = self.get_Postvar(p, "new_pw")
+                    
                 
                 with open(globalvars.path_to_password_json, "r") as jsonFile:
                     data = json.load(jsonFile)
                     
-                if data["username"] == old:
-                    data["username"] = new
+                if old_un != None and new_un != None:
+                    if data["username"] == old_un:
+                        data["username"] = new_un
+                        print("Neuer Username: " + new_un)
+                    
+                if old_pw != None and new_pw != None:
+                    if data["password"] == old_pw:
+                        data["password"] = new_pw
+                        print("Neues Passwort: " + new_pw)
 
-                    with open(globalvars.path_to_password_json, "w") as jsonFile:
-                        json.dump(data, jsonFile)
+                with open(globalvars.path_to_password_json, "w") as jsonFile:
+                    json.dump(data, jsonFile)
+                    
                     response = {
                         'success': True
                     }
+                    
                     self.wfile.write(bytes(json.dumps(response), 'utf-8'))
-                    #time.sleep(5)
-                    #super().shutdown()
-                    #self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                    #time.sleep(2)
                     _thread.start_new_thread(start_server, ())
                     
                     sys.exit()
-                    #self.server.shutdown()
-                    
-                    #
-                    #self.server.set_auth(data["username"], data["password"])
-                    #self.server.serve_forever()
-                else:
-                    response = {
-                            'success': False
-                        }
-                pass
+            else:
+                response = {
+                        'success': False
+                    }
+            pass
             
             self.wfile.write(bytes(json.dumps(response), 'utf-8'))
             
@@ -190,6 +204,8 @@ def start_server():
         data = json.load(jsonFile)
         
     server.set_auth(data["username"], data["password"])
+    print("Username: "+data["username"])
+    print("Passwort: "+data["password"])
     
     server.socket = ssl.wrap_socket(server.socket,
                                     server_side=True,
