@@ -11,7 +11,7 @@ import time
 import sys
 import _thread
 
-
+import find_and_connect_ble_device
 import globalvars
 
 
@@ -161,6 +161,43 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
                     _thread.start_new_thread(start_server, ())
                     
                     sys.exit()
+                    
+            elif base_path == '/search_bluetooth-devices':
+                
+                json_data = find_and_connect_ble_device.search_ble_devices()
+                
+                response = {
+                            'success': True,
+                            'data': json_data
+                        }
+                
+                pass
+            
+            elif base_path == '/read_serial_address':
+                
+                json_data = find_and_connect_ble_device.read_ble_serial
+                
+                response = {
+                            'success': True,
+                            'data': json_data
+                        }
+                
+                pass
+            
+            elif base_path == '/add_sensor':
+                
+                address = self.get_Postvar(p, "address")
+                address = address.replace("%3A",":")
+                new_name = self.get_Postvar(p, "new_name")
+                
+                if find_and_connect_ble_device.add_device_bluetoothctl(address) == True:
+                    if find_and_connect_ble_device.add_device_json(address, new_name) == True:
+                        response = {
+                            'success': True
+                        }
+                
+                pass
+            
             else:
                 response = {
                         'success': False
