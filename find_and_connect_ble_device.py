@@ -76,66 +76,85 @@ def search_ble_devices():
 #   of the gateway. The bluetooth address of sensor can be cut out
 #   of its output. Return is a String.
 def read_ble_serial():
-    port = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=3.0)
-    while True:
-        address = port.read(33)
-        address = address.decode('utf-8')
-        #print(address)
-        if "b_address:(" in address and "):end" in address:
-            address = address.split("b_address:(")
-            address = address[1].split("):end")
-            address = address[0]
+    try:
+        port = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=3.0)
+        while True:
+            address = port.read(33)
+            address = address.decode('utf-8')
             #print(address)
-            return address
+            if "b_address:(" in address and "):end" in address:
+                address = address.split("b_address:(")
+                address = address[1].split("):end")
+                address = address[0]
+                #print(address)
+                return address
+    except:
+        return False
 
 ####################################################################
 #   This method pairs the gateway with a given bluetooth-address of
 #   a sensor. If a sensor isn't paired it won't be possible to
 #   exchange data with it. Returns True or False.
 def add_device_bluetoothctl(address):
-    while globalvars.bluetooth_free == False:
-        print("warte bis bluetooth frei ist...")
+    with open(globalvars.path_to_framework_data_json, 'r') as f:
+        json_data = json.load(f)
+    pruefer = True
+    for device_known in json_data["sensors"]:
+        if json_data["sensors"][device_known]["sensor_bluetooth_adress"] == address:
+            pruefer = False
+    if pruefer == False:
+        return False
+    else:
+        while globalvars.bluetooth_free == False:
+            print("warte bis bluetooth frei ist...")
+            time.sleep(1)
+        globalvars.bluetooth_free = False
+        child = pexpect.spawn('bluetoothctl')
+        child.sendline ('scan on')
         time.sleep(1)
-    globalvars.bluetooth_free = False
-    child = pexpect.spawn('bluetoothctl')
-    child.sendline ('scan on')
-    time.sleep(1)
-    child.sendline ('pair '+address)
-    time.sleep(2)
-    child.sendline ('quit')
-    globalvars.bluetooth_free = True
-    p=False
-    while p == False:
-        line = child.readline().decode("utf-8")
-        print(line)
-        if "Connected: yes" in line:
-            return True
-        if "quit" in line:
-            p=True
-    return False
+        child.sendline ('pair '+address)
+        time.sleep(2)
+        child.sendline ('quit')
+        globalvars.bluetooth_free = True
+        p=False
+        while p == False:
+            line = child.readline().decode("utf-8")
+            #print(line)
+            if "Connected: yes" in line:
+                return True
+            if "quit" in line:
+                p=True
+        return False
 
 ####################################################################
 #   The opposite of the add_device_bluetoothctl-method. It removes
 #   a given address from bluetooth.
-def delete_device_bluetoothctl(address):
-    while globalvars.bluetooth_free == False:
-        print("warte bis bluetooth frei ist...")
-        time.sleep(1)
-    globalvars.bluetooth_free = False
-    child = pexpect.spawn('bluetoothctl')
-    child.sendline ('remove '+address)
-    time.sleep(2)
-    child.sendline ('quit')
-    globalvars.bluetooth_free = True
-    p=False
-    while p == False:
-        line = child.readline().decode("utf-8")
-        #print(line)
-        if "Device has been removed" in line:
-            return True
-        if "quit" in line:
-            p=True
-    return False
+def delete_device_bluetoothctl(device_id):
+    try:
+        with open(globalvars.path_to_framework_data_json, "r") as jsonFile:
+            data = json.load(jsonFile)
+        address = data["sensors"][device_id]["sensor_bluetooth_adress"]
+        #print(address)
+        while globalvars.bluetooth_free == False:
+            print("warte bis bluetooth frei ist...")
+            time.sleep(1)
+        globalvars.bluetooth_free = False
+        child = pexpect.spawn('bluetoothctl')
+        child.sendline ('remove '+address)
+        time.sleep(2)
+        child.sendline ('quit')
+        globalvars.bluetooth_free = True
+        p=False
+        while p == False:
+            line = child.readline().decode("utf-8")
+            #print(line)
+            if "Device has been removed" in line:
+                return True
+            if "quit" in line:
+                p=True
+        return False
+    except:
+        return False
 
 ####################################################################
 #   Adds an new devise to the framework_data-json. So the gateway
@@ -176,6 +195,6 @@ def delete_device_json(device_id):
     
     del json_data["sensors"][device_id]
     
-    print(json_data)
+    #print(json_data)
     with open(globalvars.path_to_framework_data_json, "w") as jsonFile:
        json.dump(json_data, jsonFile)

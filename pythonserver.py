@@ -40,7 +40,9 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
         key = self.server.get_auth_key()
         base_path = urlparse(self.path).path        
         self.do_AUTHHEAD()
-        response =""
+        response = {
+                        'success': False
+                    }
         
         if self.headers.get('Authorization') == None:  
             
@@ -175,13 +177,17 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
             
             elif base_path == '/read_serial_address':
                 
-                json_data = find_and_connect_ble_device.read_ble_serial
-                
-                response = {
-                            'success': True,
-                            'data': json_data
-                        }
-                
+                json_data = find_and_connect_ble_device.read_ble_serial()
+                if json_data != False:
+                    response = {
+                                'success': True,
+                                'data': json_data
+                            }
+                else:
+                    response = {
+                                'success': False,
+                                'Ursache': 'kein Sensor verbunden'
+                            }
                 pass
             
             elif base_path == '/add_sensor':
@@ -191,10 +197,22 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
                 new_name = self.get_Postvar(p, "new_name")
                 
                 if find_and_connect_ble_device.add_device_bluetoothctl(address) == True:
-                    if find_and_connect_ble_device.add_device_json(address, new_name) == True:
-                        response = {
-                            'success': True
-                        }
+                    find_and_connect_ble_device.add_device_json(address, new_name)
+                    response = {
+                        'success': True
+                    }
+                
+                pass
+            
+            elif base_path == '/remove_sensor':
+                
+                device_id = self.get_Postvar(p, "device_id")
+                
+                if find_and_connect_ble_device.delete_device_bluetoothctl(device_id) == True:
+                    find_and_connect_ble_device.delete_device_json(device_id)
+                    response = {
+                        'success': True,
+                    }
                 
                 pass
             
