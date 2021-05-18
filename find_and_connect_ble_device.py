@@ -157,9 +157,10 @@ def delete_device_bluetoothctl(device_id):
         return False
 
 ####################################################################
-#   Adds an new devise to the framework_data-json. So the gateway
+#   Adds an new device to the framework_data-json. So the gateway
 #   can handle this new device. The method needs the bluetooth-
-#   address of the new device and a name for it. No return.
+#   address of the new device and a name for it. This method
+#   returns the id of the added sensor.
 def add_device_json(address, new_name):
     with open(globalvars.path_to_framework_data_json, 'r') as f:
         json_data = json.load(f)
@@ -184,6 +185,7 @@ def add_device_json(address, new_name):
     #print(json_data)
     with open(globalvars.path_to_framework_data_json, "w") as jsonFile:
         json.dump(json_data, jsonFile)
+    return rand_id
         
 ####################################################################
 #   Opposite of the add_device_json-method. Deletes a device out of

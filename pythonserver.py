@@ -197,9 +197,10 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
                 new_name = self.get_Postvar(p, "new_name")
                 
                 if find_and_connect_ble_device.add_device_bluetoothctl(address) == True:
-                    find_and_connect_ble_device.add_device_json(address, new_name)
+                    device_id = find_and_connect_ble_device.add_device_json(address, new_name)
                     response = {
-                        'success': True
+                        'success': True,
+                        'data': device_id
                     }
                 
                 pass
