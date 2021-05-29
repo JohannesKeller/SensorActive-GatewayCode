@@ -1,6 +1,7 @@
 import pygatt
 from binascii import hexlify
 import time
+import datetime
 
 import _thread
 import pexpect
@@ -15,9 +16,11 @@ import globalvars
 
 class m5Stack:
     
-    def __init__(self, blu_addr, name, sync_interval, local_addr, global_addr, device_name):
+    def __init__(self, sensor_id, blu_addr, name, sync_interval, local_addr, global_addr, device_name):
+        self.Sensor_id = sensor_id
         self.Blu_addr = blu_addr
         self.Name = name
+        print(self.Name)
         self.Local_addr = local_addr
         self.Global_addr = global_addr
         self.Device_name = device_name
@@ -73,8 +76,8 @@ class m5Stack:
                 with open(globalvars.path_to_framework_data_json, "r") as jsonFile:
                     data = json.load(jsonFile)
                     
-                    if data["sensors"][self.Name]["status"] == "on":
-                        data["sensors"][self.Name]["status"] = "off"
+                    if data["sensors"][self.Sensor_id]["status"] == "on":
+                        data["sensors"][self.Sensor_id]["status"] = "off"
 
                         with open(globalvars.path_to_framework_data_json, "w") as jsonFile:
                             json.dump(data, jsonFile)
@@ -134,8 +137,19 @@ class m5Stack:
         value = str(value, 'utf-8')
         if value == "s" and self.alles_da == True:
             #if self.getcounter != -1:
-                print(Fore.BLUE + "BLE: " + self.Name + " - Übertragung abgeschlossen")
                 self.device.char_write("8eabbd4a-7220-4c74-af1d-b45e97317595", bytearray([0x67])) #g
+                
+                ts = time.time()
+                st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S.%f')
+                print(Fore.BLUE + "BLE: " + self.Name + " - Übertragung abgeschlossen - " + st)
+                with open(globalvars.path_to_framework_data_json, "r") as jsonFile:
+                    data = json.load(jsonFile)
+                    
+                data["sensors"][self.Sensor_id]["last_succ_trans"] = st
+
+                with open(globalvars.path_to_framework_data_json, "w") as jsonFile:
+                    json.dump(data, jsonFile)
+                
                 self.getcounter=-1        
         elif value == "s" and self.alles_da == False:
             print(Fore.BLUE + "BLE: " + self.Name + " - Übertragung fehlgeschlagen")

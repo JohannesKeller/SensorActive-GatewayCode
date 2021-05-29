@@ -1,5 +1,6 @@
 import pexpect
 import time
+import datetime
 import globalvars
 import json
 from random import *
@@ -174,13 +175,17 @@ def add_device_json(address, new_name):
     #print(json_data)
     y = {rand_id:{}}
     json_data["sensors"].update(y)
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S.%f')
     y = {'sensor_name': new_name,
           'sensor_type': 'm5Stack',
           'sensor_bluetooth_adress': address,
           'helpCharacteristic_UUID': '8eabbd4a-7220-4c74-af1d-b45e97317595',
           'dataCharacteristic_UUID': 'beb5483e-36e1-4688-b7f5-ea07361b26a8',
           'sync_interval': '300',
-          'status': 'on'}
+          'status': 'on',
+          'add_date': st,
+          'last_succ_trans': ''}
     json_data["sensors"][rand_id].update(y)
     #print(json_data)
     with open(globalvars.path_to_framework_data_json, "w") as jsonFile:

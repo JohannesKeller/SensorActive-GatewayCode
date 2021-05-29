@@ -8,6 +8,7 @@ from colorama import init, Fore, Style
 import os
 from io import BytesIO
 import time
+import datetime
 import sys
 import _thread
 
@@ -89,9 +90,13 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
                 
                 with open(globalvars.path_to_framework_data_json, 'r') as f:
                     json_data = json.load(f)
+                    
+                ts = time.time()
+                st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S.%f')
                 
                 response = {
                             'success': True,
+                            'time' : st,
                             'data': json_data
                         }
                 
