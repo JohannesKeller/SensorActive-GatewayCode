@@ -153,7 +153,7 @@ def delete_device_bluetoothctl(device_id):
                 return True
             if "quit" in line:
                 p=True
-        return False
+        return True
     except:
         return False
 
