@@ -1,4 +1,6 @@
 import requests
+import json
+from urllib3.exceptions import InsecureRequestWarning
 
 class postandsync:
         
@@ -6,12 +8,16 @@ class postandsync:
         global beacon_addr
         global timestamp_lost_connection
         
-        data_string=m5stack.Device_name + ",beacon_name="+m5stack.Name+",measurement=" + measurement + " value=" + str(value) + " " + nano_gekuerzt
-        #print("Lokal gepostet: "+data_string)
+        data_string=m5stack.Device_name + ",beacon_name="+m5stack.Name+",measurement=" + measurement + " value=" + str(value) + " " + str(nano_gekuerzt)
         requests.post(m5stack.Local_addr, data=data_string)
-        
         try:
-            requests.post(m5stack.Global_addr, data=data_string)
+            print("wird gepostet")
+            url = 'https://sensoractive.ddnss.de:8086/api/v2/write?org=SensorActive&bucket=GatewayData&precision=ms'
+            body = str(str(data_string)[:-6])
+            print(body)
+            headers = {'Authorization': 'Token 5wVhu0xvugVDSeH7S-cYJCUapMnQ_3eiufZ2tStC85_aspjDklV9-KnGssO7HXY24lMC0HigWXfoOAeKSAfcfA=='}
+
+            requests.post(m5stack.Global_addr, data=body, headers=headers)
             
             if m5stack.connected_to_server == False:
                 secs = m5stack.timestamp_lost_connection / 1e9

@@ -4,11 +4,11 @@ from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 # You can generate a Token from the "Tokens Tab" in the UI
-token = "biT7eNSPtoDh3uNlx_sFqPDAPcDDhjeYWpHJPprUF3CsQiYPQW0T-pzeSd0bX9IS8DxmtYsU067Ypr6dLcp7VA=="
+token = "5wVhu0xvugVDSeH7S-cYJCUapMnQ_3eiufZ2tStC85_aspjDklV9-KnGssO7HXY24lMC0HigWXfoOAeKSAfcfA=="
 org = "SensorActive"
-bucket = "Bucket1"
+bucket = "GatewayData"
 
-client = InfluxDBClient(url="http://192.52.37.249:8086", token=token)
+client = InfluxDBClient(url="https://sensoractive.ddnss.de:8086", token=token)
 
 
 write_api = client.write_api(write_options=SYNCHRONOUS)

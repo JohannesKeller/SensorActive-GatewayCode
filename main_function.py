@@ -29,8 +29,11 @@ for sensor in json_data["sensors"]:
                   json_data["main_info"]["global_adress"],
                   json_data["main_info"]["device_name"])
     
+    _thread.start_new_thread( M52.startup,() )
+    
+    time.sleep(2)
     
 
-_thread.start_new_thread( M52.startup,() )
+#_thread.start_new_thread( M52.startup,() )
 #time.sleep(6)
 #_thread.start_new_thread( M52.startup,() )
