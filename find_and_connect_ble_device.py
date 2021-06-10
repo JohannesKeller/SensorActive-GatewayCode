@@ -123,6 +123,8 @@ def add_device_bluetoothctl(address):
             #print(line)
             if "Connected: yes" in line:
                 return True
+            if "Failed to pair: org.bluez.Error.AlreadyExists" in line:
+                return True
             if "quit" in line:
                 p=True
         return False

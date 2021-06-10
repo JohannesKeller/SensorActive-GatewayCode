@@ -20,7 +20,6 @@ class m5Stack:
         self.Sensor_id = sensor_id
         self.Blu_addr = blu_addr
         self.Name = name
-        print(self.Name)
         self.Local_addr = local_addr
         self.Global_addr = global_addr
         self.Device_name = device_name
@@ -160,9 +159,28 @@ class m5Stack:
         globalvars.bluetooth_free = True;
         time.sleep(self.Sync_interval)
         self.startup()
+        
+    def check_for_json_updates(self):
+        try:
+            with open(globalvars.path_to_framework_data_json, "r") as jsonFile:
+                data = json.load(jsonFile)
+                        
+            if data["sensors"][self.Sensor_id]["sensor_name"] != self.Name:
+                print("BLE: " + self.Name + " - neuer Name -> " + data["sensors"][self.Sensor_id]["sensor_name"])
+                self.Name = data["sensors"][self.Sensor_id]["sensor_name"]
+                
+            if int(data["sensors"][self.Sensor_id]["sync_interval"]) != self.Sync_interval:
+                print("BLE: " + self.Name + " - neues Synchronisations-Intervall -> " + data["sensors"][self.Sensor_id]["sync_interval"] + " Sekunden")
+                self.Sync_interval = int(data["sensors"][self.Sensor_id]["sync_interval"])
+            
+        except:
+            print("BLE: " + self.Name + " - ist nichtmehr in Json vorhanden -> Thread wird beendet")
+            sys.exit()
+            print("Thread beendet")
             
     def startup(self):
         if(globalvars.bluetooth_free):
+            self.check_for_json_updates()
             self.werte_array = []
             globalvars.bluetooth_free = False;
             poster1 = postandsync()

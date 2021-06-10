@@ -1,3 +1,4 @@
+from m5stack import m5Stack
 import http.server, ssl
 import cgi
 import base64
@@ -207,6 +208,18 @@ class CustomServerHandler(http.server.BaseHTTPRequestHandler):
                         'success': True,
                         'data': device_id
                     }
+                    with open(globalvars.path_to_framework_data_json, 'r') as f:
+                        json_data = json.load(f)
+                    
+                    M52 = m5Stack(device_id,
+                                  json_data["sensors"][device_id]["sensor_bluetooth_adress"],
+                                  json_data["sensors"][device_id]["sensor_name"],
+                                  json_data["sensors"][device_id]["sync_interval"],
+                                  json_data["main_info"]["local_adress"],
+                                  json_data["main_info"]["global_adress"],
+                                  json_data["main_info"]["device_name"])
+    
+                    _thread.start_new_thread( M52.startup,() )
                 
                 pass
             
@@ -265,8 +278,8 @@ def start_server():
         data = json.load(jsonFile)
         
     server.set_auth(data["username"], data["password"])
-    print("Username: "+data["username"])
-    print("Passwort: "+data["password"])
+    #print("Username: "+data["username"])
+    #print("Passwort: "+data["password"])
     
     server.socket = ssl.wrap_socket(server.socket,
                                     server_side=True,
